@@ -1,0 +1,280 @@
+#CS224
+#Lab 06
+#Section 03
+#Mert Fidan
+#22101734
+
+.text
+main:
+	jal createMatrix
+	move $s0, $v0 #s0 = starting address
+	move $s1, $v1 #s1 = N value
+	move $a0, $v0
+	move $a1, $v1
+	jal initMatrix
+    
+	li $v0, 4                       # Print prompt
+	la $a0, prompt2
+	syscall
+	li $v0, 5                       # Read integer from user
+	syscall
+	move $s2, $v0 #s2 = input i value
+	
+	li $v0, 4                       # Print prompt
+	la $a0, prompt3
+	syscall
+	li $v0, 5                       # Read integer from user
+	syscall
+	move $s3, $v0 #s3 = input j value
+	
+	move $a0, $s2
+	move $a1, $s3
+	move $a2, $s1
+	move $a3, $s0
+	jal displayElement
+	
+	move $a0, $s0
+	move $a1, $s1
+	jal displaySumColumn
+	
+	move $a0, $s0
+	move $a1, $s1
+	jal displaySumRow
+	
+	li $v0, 10                      # Exit program
+	syscall
+    
+createMatrix: #takes matrix size(N) as input, creates array of N items with each item having 4 bytes, return starting address of the matrix in $v0 and N in v1
+	addi $sp, $sp, -12
+	sw $s0, 8($sp)
+	sw $s1, 4($sp)
+	sw $ra, 0($sp)
+	
+	li $v0, 4                       # Print prompt
+	la $a0, prompt1
+	syscall
+
+	li $v0, 5                       # Read integer from user
+	syscall
+	move $v1, $v0                   # Store matrix size in $s0
+	li $s1, 4
+	mult $v1, $v1
+	mflo $a0 # a0 = N x N
+	mult $a0, $s1
+	mflo $a0 #a0 = N x N x 4
+	li $v0, 9                       # Syscall 9 for memory allocation
+	syscall # v0 = starting address of the matrix (return value)
+
+	lw $s0, 8($sp)
+	lw $s1, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, 12
+    	jr $ra
+initMatrix: #takes address of matrix in a0, N value in a1, initializes elements of the matrix column by column with consecutive values
+	addi $sp, $sp, -32
+	sw $s0, 28($sp)
+	sw $s1, 24($sp)
+	sw $s2, 20($sp)
+	sw $s3, 16($sp)
+	sw $s4, 12($sp)
+	sw $s5, 8($sp)
+	sw $s6, 4($sp)
+	sw $ra, 0($sp)
+	addi $s0, $a0, 0 #s0 = starting address of matrix array
+	addi $s1, $a1, 0 #s1 = N value
+	li $s2, 1 #s2 = consecutive value
+	li $s3, 1 #s3 = column iterator
+	li $s4, 1 #s4 = row iterator
+	columnLoop:
+		bgt $s3, $s1, doneInit
+		rowLoop:
+			bgt $s4, $s1, doneCurRow
+			move $a0, $s4 #i = row
+			move $a1, $s3 #j = column
+			move $a2, $s1
+			jal calcDisplacement
+			move $s5, $v0 #s5 = displacement value
+			add $s6, $s0, $s5 #s6 = starting address + displacement value
+			sw $s2, 0($s6)
+			addi $s2, $s2, 1 #increment consecutive value
+			addi $s4, $s4, 1
+			j rowLoop
+			doneCurRow:
+				addi $s3, $s3, 1
+				addi $s4, $zero, 1
+				j columnLoop
+	doneInit:
+		lw $s0, 28($sp)
+		lw $s1, 24($sp)
+		lw $s2, 20($sp)
+		lw $s3, 16($sp)
+		lw $s4, 12($sp)
+		lw $s5, 8($sp)
+		lw $s6, 4($sp)
+		lw $ra, 0($sp)
+		addi $sp, $sp, 32
+		jr $ra
+	  
+calcDisplacement: #displacement value w.r.t start of the array for element (i, j) , a0 = i and a1 = j, a2 = N, v0 = displacement value
+	addi $sp, $sp, -24
+	sw $s0, 20($sp)
+	sw $s1, 16($sp)
+	sw $s2, 12($sp)
+	sw $s3, 8($sp)
+	sw $s4, 4($sp)
+	sw $ra, 0($sp)
+	li $s0, 4
+	addi $s1, $a1, -1 #(j-1)
+	mult $a2, $s0	  #(N x 4)
+	mflo $s2
+	mult $s1, $s2
+	mflo $s3 	  #s3 = (N x 4) x (j-1)
+	addi $s4, $a0, -1 #(i-1)
+	mult $s4, $s0	  #N x (i-1)
+	mflo $s4          #s4 = N x (i-1)
+	add $v0, $s3, $s4  # v0 = (N x 4) x (j-1) + N x (i-1)
+	lw $s0, 20($sp)
+	lw $s1, 16($sp)
+	lw $s2, 12($sp)
+	lw $s3, 8($sp)
+	lw $s4, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, 24
+	jr $ra
+	
+displayElement: #takes i in a0 and j in a1 values of the desired element, starting address of matrix in a3 and N in a2, displays elements value in v0
+	addi $sp, $sp, -12
+	sw $s0, 8($sp)
+	sw $s1, 4($sp)
+	sw $ra, 0($sp)
+	jal calcDisplacement
+	move $s0, $v0
+	add $s0, $s0, $a3
+	lw $s1, 0($s0)
+	li $v0, 4                       # Print prompt
+	la $a0, prompt4
+	syscall
+	move $a0, $s1
+	li $v0, 1
+	syscall
+	lw $s0, 8($sp)
+	lw $s1, 4($sp)
+	lw $ra, 0($sp)
+	addi $sp, $sp, 12
+	jr $ra
+	
+displaySumRow:
+	addi $sp, $sp, -36
+	sw $s0, 32($sp)
+	sw $s1, 28($sp)
+	sw $s2, 24($sp)
+	sw $s3, 20($sp)
+	sw $s4, 16($sp)
+	sw $s5, 12($sp)
+	sw $s6, 8($sp)
+	sw $s7, 4($sp)
+	sw $ra, 0($sp)
+	addi $s0, $a0, 0 #s0 = starting address of matrix array
+	addi $s1, $a1, 0 #s1 = N value
+	li $s2, 0 #s2 = sum
+	li $s3, 1 #s3 = row iterator
+	li $s4, 1 #s4 = column iterator
+	rowLoopRowSum:
+		bgt $s3, $s1, doneRowSum
+		columnLoopRowSum:
+			bgt $s4, $s1, doneCurRowSum
+			move $a0, $s3 #i = row
+			move $a1, $s4 #j = column
+			move $a2, $s1
+			jal calcDisplacement
+			move $s5, $v0 #s5 = displacement value
+			add $s6, $s0, $s5 #s6 = starting address + displacement value
+			lw $s7, 0($s6)
+			add $s2, $s2, $s7 #increment consecutive value
+			addi $s4, $s4, 1
+			j columnLoopRowSum
+			doneCurRowSum:
+				addi $s3, $s3, 1
+				addi $s4, $zero, 1
+				j rowLoopRowSum
+	doneRowSum:
+		la $a0, row
+		li $v0, 4
+		syscall 
+		move $a0, $s2
+		li $v0, 1
+		syscall
+		lw $s0, 32($sp)
+		lw $s1, 28($sp)
+		lw $s2, 24($sp)
+		lw $s3, 20($sp)
+		lw $s4, 16($sp)
+		lw $s5, 12($sp)
+		lw $s6, 8($sp)
+		lw $s7, 4($sp)
+		lw $ra, 0($sp)
+		addi $sp, $sp, 36
+		jr $ra
+		
+displaySumColumn:
+	addi $sp, $sp, -36
+	sw $s0, 32($sp)
+	sw $s1, 28($sp)
+	sw $s2, 24($sp)
+	sw $s3, 20($sp)
+	sw $s4, 16($sp)
+	sw $s5, 12($sp)
+	sw $s6, 8($sp)
+	sw $s7, 4($sp)
+	sw $ra, 0($sp)
+	addi $s0, $a0, 0 #s0 = starting address of matrix array
+	addi $s1, $a1, 0 #s1 = N value
+	li $s2, 0 #s2 = sum
+	li $s3, 1 #s3 = column iterator
+	li $s4, 1 #s4 = row iterator
+	columnLoopColSum:
+		bgt $s3, $s1, doneColSum
+		rowLoopColSum:
+			bgt $s4, $s1, doneCurColSum
+			move $a0, $s4 #i = row
+			move $a1, $s3 #j = column
+			move $a2, $s1
+			jal calcDisplacement
+			move $s5, $v0 #s5 = displacement value
+			add $s6, $s0, $s5 #s6 = starting address + displacement value
+			lw $s7, 0($s6)
+			add $s2, $s2, $s7 #increment consecutive value
+			addi $s4, $s4, 1
+			j rowLoopColSum
+			doneCurColSum:
+				addi $s3, $s3, 1
+				addi $s4, $zero, 1
+				j columnLoopColSum
+	doneColSum:
+		la $a0, column
+		li $v0, 4
+		syscall 
+		move $a0, $s2
+		li $v0, 1
+		syscall
+		lw $s0, 32($sp)
+		lw $s1, 28($sp)
+		lw $s2, 24($sp)
+		lw $s3, 20($sp)
+		lw $s4, 16($sp)
+		lw $s5, 12($sp)
+		lw $s6, 8($sp)
+		lw $s7, 4($sp)
+		lw $ra, 0($sp)
+		addi $sp, $sp, 36
+		jr $ra
+	
+.data
+prompt1: .asciiz "Enter the size of the matrix (N): "
+prompt2: .asciiz "Enter row value for the element: "
+prompt3: .asciiz "Enter column value for the element: "
+prompt4: .asciiz "The element at entered location is: "
+column: .asciiz "\nThe summation of matrix elements(column-major) is: "
+row: .asciiz "\nThe summation of matrix elements(row-major) is: "
+
+
