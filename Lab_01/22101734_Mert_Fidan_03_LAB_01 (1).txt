@@ -1,0 +1,140 @@
+#CS224
+#Lab 01
+#Section 03
+#Mert Fidan
+#22101734
+#28.02.2023	
+
+	.text
+	la $a0, str1	
+	li $v0, 4	
+	syscall
+	
+	li $v0, 5	
+	syscall
+
+	la $t0, array #s0 = base address
+	addi $s0, $0, 0 #s1 = i
+	addi $t1, $v0, 0 #t0 = N
+	addi $t2, $t0, 0 #t1 = current array item address
+while1:
+	beq $s0, $t1, done1 #i == N - 1
+	la $a0, str2	
+	li $v0, 4	
+	syscall
+	li $v0, 5	
+	syscall	
+	sw $v0, 0($t2)
+	addi $t2, $t2, 4
+	addi $s0, $s0, 1
+	j while1
+done1:	
+	sub $s0, $s0, $s0
+	la $t3, array
+while2:
+	beq $s0, $t1, done2
+	lw $t4, 0($t3)
+	addi $t3, $t3, 4
+	addi $s0, $s0, 1
+	div $t4, $t1
+	mfhi $s3
+	bne $s3, 0, caseEqual
+	addi $s4, $s4, 1 #evenly divisible by N count
+	caseEqual:
+		bne $t4, $t1, caseLessThan
+		addi $t5, $t5, 1 #equal count
+		j while2
+	caseLessThan:
+		slt $s2, $t4, $t1
+		bne $s2, 1, caseGreaterThan
+		addi $t6, $t6, 1 #array[i] less than N
+		j while2
+	caseGreaterThan:
+		addi $t7, $t7, 1 #array[i] greater than N
+		j while2	
+done2: 		
+	la $a0, str3	
+	li $v0, 4	
+	syscall
+	
+	la $a0, 0($t5)
+	li $v0, 1	
+	syscall
+	 
+	la $a0, str4	
+	li $v0, 4	
+	syscall
+
+	la $a0, 0($t6)
+	li $v0, 1	
+	syscall
+	 	
+	la $a0, str5	
+	li $v0, 4	
+	syscall
+	
+	la $a0, 0($t7)
+	li $v0, 1	
+	syscall
+	 	
+	la $a0, str6	
+	li $v0, 4	
+	syscall
+	
+	la $a0, 0($s4)
+	li $v0, 1	
+	syscall
+	
+	li $v0,10
+	syscall	
+	
+	.data
+array:  .space 80	
+str1:   .asciiz "Please enter the number of elements: "
+str2:	.asciiz "\nPlease enter an element to the array: " 
+str3:	.asciiz "\nNumber of array members equal to N: "
+str4:	.asciiz "\nNumber of array members less than N: "
+str5:	.asciiz "\nNumber of array members greater than N: "
+str6:	.asciiz "\nNumber of array members evenly divisible by N: "
+
+########################################################################
+
+	.text
+	la $a0, str1	
+	li $v0, 4	
+	syscall
+	
+	li $v0, 5	
+	syscall	
+	move $t0, $v0
+	
+	la $a0, str2	
+	li $v0, 4	
+	syscall
+	
+	li $v0, 5	
+	syscall
+	move $t1, $v0
+	
+	addi $s0, $0, 4
+	add $t2, $t0, $t1
+	addi $t2, $t2, 4
+	mul $t3, $t0, 2
+	div $t2, $t3
+	mflo $t4
+	
+	la $a0, str3	
+	li $v0, 4	
+	syscall
+	
+	la $a0, 0($t4)
+	li $v0, 1	
+	syscall
+	
+	li $v0,10
+	syscall	
+	
+	.data
+str1: 	.asciiz "Please enter the value for 'a': "
+str2: 	.asciiz "Please enter the value for 'b': "
+str3:	.asciiz "The result for the expression is: "
